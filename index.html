@@ -195,7 +195,10 @@
     .lic-top{display:flex;justify-content:space-between;gap:10px}.lic-code{color:#e1b854;font-weight:800;font-size:14px;word-break:break-all}
     .badge{padding:5px 8px;border-radius:12px;font-size:10px;font-weight:800;white-space:nowrap}.badge.on{background:#13261a;color:#72df9b}.badge.off{background:#301717;color:#ff8b8b}
     .lic-meta{color:#777;font-size:11px;margin-top:6px}.lic-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-    button.mini{width:auto;margin:0;padding:9px 10px;font-size:11px;border-radius:9px}button.rojo{background:#301717;color:#ff8b8b;border:1px solid #633}button.verde{background:#13261a;color:#72df9b;border:1px solid #28563a}
+    button.mini{width:auto;margin:0;padding:7px 8px;font-size:10px;border-radius:8px;line-height:1.1}
+    button.rojo{background:#301717;color:#ff8b8b;border:1px solid #633}
+    button.verde{background:#13261a;color:#72df9b;border:1px solid #28563a}
+    button.eliminar{background:#151515;color:#ff7272;border:1px solid #333}
   </style>
 </head>
 
@@ -261,9 +264,8 @@
           <div class="acciones-codigo"><button onclick="copiarNueva()">📋 COPIAR</button><button onclick="compartirNueva()">↗ COMPARTIR</button></div>
         </div>
 
-        <div id="mensajePanel" class="mensaje"></div>
-
         <h3 class="titulo-lista">LICENCIAS</h3>
+        <div id="mensajePanel" class="mensaje"></div>
         <button class="secundario" onclick="cargarLicencias()">↻ ACTUALIZAR LICENCIAS</button>
         <div id="listaLicencias" class="lista-licencias"></div>
         <button class="secundario" onclick="cerrarSesion()">
@@ -422,7 +424,7 @@
     const {data,error}=await cliente.rpc("listar_licencias_admin");
     if(error){console.error(error);l.innerHTML='<div class="mensaje error">No se pudieron cargar las licencias.</div>';return}
     if(!data?.length){l.innerHTML='<div class="mensaje">No hay licencias.</div>';return}
-    l.innerHTML=data.map(x=>`<div class="licencia-item"><div class="lic-top"><div class="lic-code">${esc(x.codigo)}</div><span class="badge ${x.activa?"on":"off"}">${x.activa?"ACTIVA":"DESACTIVADA"}</span></div><div class="lic-meta">${x.dispositivo_id?"Vinculada a un dispositivo":"Sin dispositivo vinculado"}</div><div class="lic-actions"><button class="mini" onclick='copiarLicencia(${JSON.stringify(x.codigo)})'>📋 COPIAR</button><button class="mini" onclick='compartirLicencia(${JSON.stringify(x.codigo)})'>↗ COMPARTIR</button><button class="mini ${x.activa?"rojo":"verde"}" onclick='cambiarEstado(${JSON.stringify(x.codigo)},${!x.activa})'>${x.activa?"DESACTIVAR":"ACTIVAR"}</button>${x.dispositivo_id?`<button class="mini secundario" onclick='liberarDispositivo(${JSON.stringify(x.codigo)})'>🔓 LIBERAR</button>`:""}</div></div>`).join("")
+    l.innerHTML=data.map(x=>`<div class="licencia-item"><div class="lic-top"><div class="lic-code">${esc(x.codigo)}</div><span class="badge ${x.activa?"on":"off"}">${x.activa?"ACTIVA":"DESACTIVADA"}</span></div><div class="lic-meta">${x.dispositivo_id?"Vinculada a un dispositivo":"Sin dispositivo vinculado"}</div><div class="lic-actions"><button class="mini" onclick='copiarLicencia(${JSON.stringify(x.codigo)})'>📋 COPIAR</button><button class="mini" onclick='compartirLicencia(${JSON.stringify(x.codigo)})'>↗ COMPARTIR</button><button class="mini ${x.activa?"rojo":"verde"}" onclick='cambiarEstado(${JSON.stringify(x.codigo)},${!x.activa})'>${x.activa?"DESACTIVAR":"ACTIVAR"}</button>${x.dispositivo_id?`<button class="mini secundario" onclick='liberarDispositivo(${JSON.stringify(x.codigo)})'>🔓 LIBERAR</button>`:""}<button class="mini eliminar" onclick='eliminarLicencia(${JSON.stringify(x.codigo)})'>ELIMINAR</button></div></div>`).join("")
   }
   async function copiarLicencia(c){await copyText(c);msg("Licencia copiada.","ok")}
   async function compartirLicencia(c){if(navigator.share)await navigator.share({title:"Mi Agenda",text:"Tu licencia de MI AGENDA es: "+c});else{await copyText(c);msg("Licencia copiada para compartir.","ok")}}
@@ -439,6 +441,15 @@
     await cargarLicencias();
   }
   async function liberarDispositivo(c){if(!confirm("¿Liberar esta licencia del dispositivo actual? Podrá activarse en otro dispositivo."))return;const {data,error}=await cliente.rpc("liberar_dispositivo_admin",{p_codigo:c});if(error){console.error(error);msg("No se pudo liberar el dispositivo.","error");return}if(data!==true){msg("No se encontró la licencia.","error");return}msg("Licencia liberada del dispositivo.","ok");await cargarLicencias()}
+
+  async function eliminarLicencia(c){
+    if(!confirm("¿ELIMINAR definitivamente "+c+"?\n\nEsta acción no se puede deshacer."))return;
+    const {data,error}=await cliente.rpc("eliminar_licencia_admin",{p_codigo:c});
+    if(error){console.error(error);msg("No se pudo eliminar la licencia.","error");return}
+    if(data!==true){msg("No se encontró la licencia.","error");return}
+    msg("Licencia eliminada.","ok");
+    await cargarLicencias();
+  }
 
   async function cerrarSesion() {
 
