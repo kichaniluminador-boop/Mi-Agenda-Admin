@@ -426,8 +426,8 @@
   }
   async function copiarLicencia(c){await copyText(c);msg("Licencia copiada.","ok")}
   async function compartirLicencia(c){if(navigator.share)await navigator.share({title:"Mi Agenda",text:"Tu licencia de MI AGENDA es: "+c});else{await copyText(c);msg("Licencia copiada para compartir.","ok")}}
-  async function cambiarEstado(c,a){if(!confirm((a?"¿Activar ":"¿Desactivar ")+c+"?"))return;const {error}=await cliente.from("licencias").update({activa:a}).eq("codigo",c);if(error){console.error(error);msg("No se pudo cambiar el estado.","error");return}msg(a?"Licencia activada.":"Licencia desactivada.","ok");cargarLicencias()}
-  async function liberarDispositivo(c){if(!confirm("¿Liberar esta licencia del dispositivo actual? Podrá activarse en otro dispositivo."))return;const {error}=await cliente.from("licencias").update({dispositivo_id:null}).eq("codigo",c);if(error){console.error(error);msg("No se pudo liberar el dispositivo.","error");return}msg("Licencia liberada del dispositivo.","ok");cargarLicencias()}
+  async function cambiarEstado(c,a){if(!confirm((a?"¿Activar ":"¿Desactivar ")+c+"?"))return;const {data,error}=await cliente.rpc("cambiar_estado_licencia_admin",{p_codigo:c,p_activa:a});if(error){console.error(error);msg("No se pudo cambiar el estado.","error");return}if(data!==true){msg("No se encontró la licencia.","error");return}msg(a?"Licencia activada.":"Licencia desactivada.","ok");await cargarLicencias()}
+  async function liberarDispositivo(c){if(!confirm("¿Liberar esta licencia del dispositivo actual? Podrá activarse en otro dispositivo."))return;const {data,error}=await cliente.rpc("liberar_dispositivo_admin",{p_codigo:c});if(error){console.error(error);msg("No se pudo liberar el dispositivo.","error");return}if(data!==true){msg("No se encontró la licencia.","error");return}msg("Licencia liberada del dispositivo.","ok");await cargarLicencias()}
 
   async function cerrarSesion() {
 
