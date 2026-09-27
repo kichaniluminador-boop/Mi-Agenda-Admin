@@ -261,6 +261,24 @@
     </section>
 
 
+    <!-- RECUPERAR CONTRASEÑA -->
+    <section id="recuperar" class="tarjeta oculto">
+      <h2 style="margin-top:0;text-align:center">NUEVA CONTRASEÑA</h2>
+      <div class="subtitulo" style="text-align:center;margin-bottom:16px">Crea una nueva contraseña para MI AGENDA ADMIN</div>
+
+      <label>Nueva contraseña</label>
+      <input id="nuevaPassword" type="password" placeholder="Nueva contraseña" autocomplete="new-password">
+
+      <label>Repetir contraseña</label>
+      <input id="repetirPassword" type="password" placeholder="Repite la contraseña" autocomplete="new-password">
+
+      <button id="btnGuardarPassword" onclick="guardarNuevaPassword()">
+        GUARDAR CONTRASEÑA
+      </button>
+
+      <div id="mensajeRecuperar" class="mensaje"></div>
+    </section>
+
     <!-- PANEL -->
     <section id="panel" class="oculto">
 
@@ -317,6 +335,66 @@
   );
 
 
+  let modoRecuperacion = false;
+
+  function mostrarRecuperacion() {
+    modoRecuperacion = true;
+    document.getElementById("login").classList.add("oculto");
+    document.getElementById("panel").classList.add("oculto");
+    document.getElementById("recuperar").classList.remove("oculto");
+  }
+
+  async function guardarNuevaPassword() {
+    const nueva = document.getElementById("nuevaPassword").value;
+    const repetir = document.getElementById("repetirPassword").value;
+    const mensaje = document.getElementById("mensajeRecuperar");
+
+    mensaje.className = "mensaje";
+
+    if (nueva.length < 6) {
+      mensaje.className = "mensaje error";
+      mensaje.textContent = "La contraseña debe tener al menos 6 caracteres.";
+      return;
+    }
+
+    if (nueva !== repetir) {
+      mensaje.className = "mensaje error";
+      mensaje.textContent = "Las contraseñas no coinciden.";
+      return;
+    }
+
+    mensaje.textContent = "Guardando nueva contraseña...";
+    const { error } = await cliente.auth.updateUser({ password: nueva });
+
+    if (error) {
+      console.error(error);
+      mensaje.className = "mensaje error";
+      mensaje.textContent = "No se pudo cambiar la contraseña. Solicita un nuevo enlace de recuperación.";
+      return;
+    }
+
+    mensaje.className = "mensaje ok";
+    mensaje.textContent = "Contraseña actualizada correctamente.";
+    document.getElementById("nuevaPassword").value = "";
+    document.getElementById("repetirPassword").value = "";
+
+    setTimeout(async () => {
+      await cliente.auth.signOut();
+      modoRecuperacion = false;
+      document.getElementById("recuperar").classList.add("oculto");
+      document.getElementById("login").classList.remove("oculto");
+      document.getElementById("mensajeLogin").className = "mensaje ok";
+      document.getElementById("mensajeLogin").textContent = "Contraseña cambiada. Ya puedes iniciar sesión.";
+      history.replaceState({}, document.title, location.pathname);
+    }, 900);
+  }
+
+  cliente.auth.onAuthStateChange((event) => {
+    if (event === "PASSWORD_RECOVERY") {
+      mostrarRecuperacion();
+    }
+  });
+
   async function iniciarSesion() {
 
     const email =
@@ -350,11 +428,14 @@
 
   async function comprobarSesion() {
 
+    const esRecovery = new URLSearchParams(location.hash.replace(/^#/, "")).get("type") === "recovery";
+    if (esRecovery) mostrarRecuperacion();
+
     const {
       data: { session }
     } = await cliente.auth.getSession();
 
-    if (session?.user) {
+    if (session?.user && !modoRecuperacion && !esRecovery) {
       mostrarPanel(session.user);
     }
   }
