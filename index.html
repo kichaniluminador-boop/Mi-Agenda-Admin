@@ -457,6 +457,8 @@
 
   async function generarLicencia() {
 
+    if (!confirm("¿GENERAR NUEVA LICENCIA?")) return;
+
     const mensaje =
       document.getElementById("mensajePanel");
 
