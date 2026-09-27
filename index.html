@@ -199,11 +199,19 @@
     button.rojo{background:#301717;color:#ff8b8b;border:1px solid #633}
     button.verde{background:#13261a;color:#72df9b;border:1px solid #28563a}
     button.eliminar{background:#151515;color:#ff7272;border:1px solid #333}
-    .lic-owner{display:flex;align-items:center;gap:7px;margin-bottom:7px;color:#f1f1f1;font-size:14px;font-weight:800;text-transform:uppercase}
-    .edit-owner{width:28px;height:28px;margin:0;padding:4px;display:grid;place-items:center;background:transparent;color:#d7ad4b;border:1px solid #3a321f;border-radius:8px}
+    .lic-owner{display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:10px;color:#f1f1f1;font-size:14px;font-weight:800;text-transform:uppercase;text-align:center}
+    .edit-owner{width:28px;height:28px;margin:0;padding:4px;display:grid;place-items:center;background:transparent;color:#d7ad4b;border:1px solid #3a321f;border-radius:8px;flex:0 0 auto}
     .edit-owner svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-    .lic-status{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+    .lic-top{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px}
+    .lic-status{display:flex;align-items:flex-end;justify-content:center;gap:6px;flex-direction:column;flex-wrap:nowrap;margin-left:auto}
     .badge.linked{background:#13261a;color:#72df9b}.badge.free{background:#282313;color:#e1b854}
+    .lic-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:12px}
+    .lic-actions button.mini{width:100%;margin:0;padding:8px 7px;font-size:10px;border-radius:8px;line-height:1.1}
+    .lic-actions button:nth-child(1){grid-column:1}
+    .lic-actions button:nth-child(2){grid-column:2}
+    .lic-actions button:nth-child(3){grid-column:2;grid-row:2}
+    .lic-actions button:nth-child(4){grid-column:3;grid-row:2}
+    .lic-actions button:nth-child(5){grid-column:1;grid-row:2}
   </style>
 </head>
 
@@ -429,7 +437,7 @@
     const {data,error}=await cliente.rpc("listar_licencias_admin");
     if(error){console.error(error);l.innerHTML='<div class="mensaje error">No se pudieron cargar las licencias.</div>';return}
     if(!data?.length){l.innerHTML='<div class="mensaje">No hay licencias.</div>';return}
-    l.innerHTML=data.map(x=>`<div class="licencia-item"><div class="lic-owner"><span>${esc(x.nombre||"SIN NOMBRE")}</span><button class="edit-owner" aria-label="Editar titular" title="Editar titular" onclick='editarTitular(${JSON.stringify(x.codigo)},${JSON.stringify(x.nombre||"")})'><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></div><div class="lic-top"><div class="lic-code">${esc(x.codigo)}</div><div class="lic-status"><span class="badge ${x.activa?"on":"off"}">${x.activa?"ACTIVA":"DESACTIVADA"}</span>${x.activa?`<span class="badge ${x.dispositivo_id?"linked":"free"}">${x.dispositivo_id?"VINCULADA":"LIBERADA"}</span>`:""}</div></div><div class="lic-actions"><button class="mini" onclick='copiarLicencia(${JSON.stringify(x.codigo)})'>📋 COPIAR</button><button class="mini" onclick='compartirLicencia(${JSON.stringify(x.codigo)})'>↗ COMPARTIR</button><button class="mini ${x.activa?"rojo":"verde"}" onclick='cambiarEstado(${JSON.stringify(x.codigo)},${!x.activa})'>${x.activa?"DESACTIVAR":"ACTIVAR"}</button>${x.dispositivo_id?`<button class="mini secundario" onclick='liberarDispositivo(${JSON.stringify(x.codigo)})'>🔓 LIBERAR</button>`:""}<button class="mini eliminar" onclick='eliminarLicencia(${JSON.stringify(x.codigo)})'>ELIMINAR</button></div></div>`).join("")
+    l.innerHTML=data.map(x=>`<div class="licencia-item"><div class="lic-owner"><span>${esc(x.nombre||"SIN NOMBRE")}</span><button class="edit-owner" aria-label="Editar titular" title="Editar titular" onclick='editarTitular(${JSON.stringify(x.codigo)},${JSON.stringify(x.nombre||"")})'><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></div><div class="lic-top"><div class="lic-code">${esc(x.codigo)}</div><div class="lic-status"><span class="badge ${x.activa?"on":"off"}">${x.activa?"ACTIVA":"DESACTIVADA"}</span>${x.activa?`<span class="badge ${x.dispositivo_id?"linked":"free"}">${x.dispositivo_id?"VINCULADA":"LIBERADA"}</span>`:""}</div></div><div class="lic-actions"><button class="mini" onclick='copiarLicencia(${JSON.stringify(x.codigo)})'>📋 COPIAR</button><button class="mini" onclick='compartirLicencia(${JSON.stringify(x.codigo)})'>↗ COMPARTIR</button><button class="mini eliminar" onclick='eliminarLicencia(${JSON.stringify(x.codigo)})'>ELIMINAR</button><button class="mini ${x.activa?"rojo":"verde"}" onclick='cambiarEstado(${JSON.stringify(x.codigo)},${!x.activa})'>${x.activa?"DESACTIVAR":"ACTIVAR"}</button>${x.dispositivo_id?`<button class="mini secundario" onclick='liberarDispositivo(${JSON.stringify(x.codigo)})'>🔓 LIBERAR</button>`:""}</div></div>`).join("")
   }
   async function copiarLicencia(c){await copyText(c);msg("Licencia copiada.","ok")}
   async function compartirLicencia(c){if(navigator.share)await navigator.share({text:c});else{await copyText(c);msg("Licencia copiada para compartir.","ok")}}
